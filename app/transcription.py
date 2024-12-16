@@ -5,17 +5,13 @@ import ffmpeg
 import os
 from typing import Dict, Any
 from .config import settings
-from transformers import pipeline
+import requests
 import torch
 
 # Initialize WhisperX model
 print("Loading WhisperX model...")
 device = "cuda" if torch.cuda.is_available() else "cpu"
 model = whisperx.load_model("large", device=device)  # Choose model size as needed
-
-# Initialize summarization pipeline
-print("Loading summarization model...")
-summarizer = pipeline("summarization", model="facebook/bart-large-cnn", device=0 if device=="cuda" else -1)
 
 def convert_audio(input_path: str, output_path: str) -> None:
     """Convert audio to WAV format with specific parameters."""
@@ -62,15 +58,25 @@ def transcribe_audio(file_path: str, language: str = "he") -> Dict[str, Any]:
         raise Exception(f"Transcription failed: {e}")
 
 def summarize_transcript(transcript: str) -> str:
-    """Summarize transcript using transformers-based model."""
+    """Summarize transcript using Gemini API."""
     try:
-        # The summarizer may have a token limit; split if necessary
-        max_chunk = 1000  # Adjust based on model's max tokens
-        summary = ""
-        for i in range(0, len(transcript), max_chunk):
-            chunk = transcript[i:i+max_chunk]
-            summary_chunk = summarizer(chunk, max_length=150, min_length=40, do_sample=False)[0]['summary_text']
-            summary += summary_chunk + " "
-        return summary.strip()
+        headers = {
+            "Authorization": f"Bearer {settings.GEMINI_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        payload = {
+            "text": transcript,
+            "language": "he"  # Adjust based on Gemini API requirements
+        }
+        response = requests.post(settings.GEMINI_API_URL, headers=headers, json=payload)
+        
+        if response.status_code == 200:
+            data = response.json()
+            summary = data.get("summary")
+            if not summary:
+                raise Exception("No summary found in Gemini API response.")
+            return summary
+        else:
+            raise Exception(f"Gemini API error: {response.status_code} - {response.text}")
     except Exception as e:
         raise Exception(f"Summarization failed: {e}")

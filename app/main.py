@@ -95,7 +95,7 @@ async def upload_audio(
             transcript_data = transcription.transcribe_audio(file_path, language=audio_file_language)
             logger.debug(f"Transcribed audio: {transcript_data}")
 
-            # Summarize transcript
+            # Summarize transcript using Gemini API
             full_transcript = " ".join([segment['text'] for segment in transcript_data['transcript']])
             summary = transcription.summarize_transcript(full_transcript)
             logger.debug(f"Summarized transcript: {summary}")
@@ -120,7 +120,7 @@ async def upload_audio(
                 representative_name=representative_name,
                 representative_details=None,  # Populate as needed
                 conversation_transcript=transcript_data,
-                conversation_summary=summary,
+                conversation_summary=summary,  # Assigning summary here
                 tags=None,  # Populate as needed
                 sentiment=None,  # Populate as needed
                 resolution_status=None,  # Populate as needed
