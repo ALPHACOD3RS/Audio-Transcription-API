@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+SQLAlchemy
+psycopg2-binary
+python-jose[cryptography]
+passlib[bcrypt]
+pydantic
+aiofiles
+python-multipart
+whisperx
+transformers
+torch
+loguru
+ffmpeg-python
